@@ -24,8 +24,8 @@ function App() {
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [manualEntry, setManualEntry] = useState<ManualEntryForm>({
     companyId: '',
-    hours: '',
-    minutes: '',
+    startTime: '',
+    endTime: '',
     date: new Date().toISOString().split('T')[0]
   });
 
@@ -275,17 +275,16 @@ function App() {
   };
 
   const addManualEntry = async () => {
-    if (!manualEntry.companyId || (!manualEntry.hours && !manualEntry.minutes) || !user) return;
+    if (!manualEntry.companyId || !manualEntry.startTime || !manualEntry.endTime || !user) return;
     
-    const duration = (parseInt(manualEntry.hours || '0') * 60) + parseInt(manualEntry.minutes || '0');
-    const date = new Date(manualEntry.date);
-    const endTime = new Date(date.getTime() + duration * 60000).toISOString();
-    const startTime = date.toISOString();
+    const startDateTime = new Date(`${manualEntry.date}T${manualEntry.startTime}`);
+    const endDateTime = new Date(`${manualEntry.date}T${manualEntry.endTime}`);
+    const duration = Math.round((endDateTime.getTime() - startDateTime.getTime()) / 60000); // Convert to minutes
     
     const newEntry = {
       company_id: manualEntry.companyId,
-      start_time: startTime,
-      end_time: endTime,
+      start_time: startDateTime.toISOString(),
+      end_time: endDateTime.toISOString(),
       duration,
       is_manual: true,
       date: manualEntry.date,
@@ -318,8 +317,8 @@ function App() {
 
     setManualEntry({
       companyId: '',
-      hours: '',
-      minutes: '',
+      startTime: '',
+      endTime: '',
       date: new Date().toISOString().split('T')[0]
     });
     setShowManualEntry(false);
@@ -767,54 +766,79 @@ function App() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Add Manual Time Entry</h3>
-                <button onClick={() => setShowManualEntry(false)}>
-                  <X className="w-5 h-5" />
+                <h2 className="text-xl font-semibold">Add Manual Time Entry</h2>
+                <button
+                  onClick={() => setShowManualEntry(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-6 h-6" />
                 </button>
               </div>
-              <select
-                value={manualEntry.companyId}
-                onChange={(e) => setManualEntry({...manualEntry, companyId: e.target.value})}
-                className="w-full p-2 border rounded-lg mb-4"
-              >
-                <option value="">Select Company</option>
-                {companies.map(company => (
-                  <option key={company.id} value={company.id}>
-                    {company.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="date"
-                value={manualEntry.date}
-                onChange={(e) => setManualEntry({...manualEntry, date: e.target.value})}
-                className="w-full p-2 border rounded-lg mb-4"
-              />
-              <div className="flex gap-4 mb-4">
-                <input
-                  type="number"
-                  value={manualEntry.hours}
-                  onChange={(e) => setManualEntry({...manualEntry, hours: e.target.value})}
-                  placeholder="Hours"
-                  min="0"
-                  className="w-1/2 p-2 border rounded-lg"
-                />
-                <input
-                  type="number"
-                  value={manualEntry.minutes}
-                  onChange={(e) => setManualEntry({...manualEntry, minutes: e.target.value})}
-                  placeholder="Minutes"
-                  min="0"
-                  max="59"
-                  className="w-1/2 p-2 border rounded-lg"
-                />
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Company
+                  </label>
+                  <select
+                    value={manualEntry.companyId}
+                    onChange={(e) => setManualEntry({ ...manualEntry, companyId: e.target.value })}
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="">Select Company</option>
+                    {companies.map(company => (
+                      <option key={company.id} value={company.id}>
+                        {company.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    value={manualEntry.date}
+                    onChange={(e) => setManualEntry({ ...manualEntry, date: e.target.value })}
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Time
+                    </label>
+                    <input
+                      type="time"
+                      value={manualEntry.startTime}
+                      onChange={(e) => setManualEntry({ ...manualEntry, startTime: e.target.value })}
+                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End Time
+                    </label>
+                    <input
+                      type="time"
+                      value={manualEntry.endTime}
+                      onChange={(e) => setManualEntry({ ...manualEntry, endTime: e.target.value })}
+                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={addManualEntry}
+                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Add Entry
+                </button>
               </div>
-              <button
-                onClick={addManualEntry}
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-              >
-                Add Entry
-              </button>
             </div>
           </div>
         )}
